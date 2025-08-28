@@ -1,3 +1,4 @@
+
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
 
 local window = library:AddWindow("99 Nights in the Forest", {
@@ -10,101 +11,117 @@ local Main = window:AddTab("Player")
 local folder1 = Main:AddFolder("Other Players")
 
 folder1:AddSwitch("ESP", function(state)
-    esp = state
-    if state then
+    local espEnabled = state -- Changed from global 'esp' to local 'espEnabled'
+
+    if espEnabled then
+        local nameFont = Enum.Font.Garamond
+        local distanceFont = Enum.Font.Bangers
+        local nameColor = Color3.fromRGB(255, 255, 255)
+        local distanceColor = Color3.fromRGB(255, 0, 0)
+        local textSize = 14
+
         local Players = game:GetService("Players")
         local RunService = game:GetService("RunService")
-        local Camera = workspace.CurrentCamera
-
         local LocalPlayer = Players.LocalPlayer
-        local ESPObjects = {}
-        
-        local function CreateESP(player)
-            if player == LocalPlayer then return end
-            
-            local Box = Drawing.new("Square")
-            Box.Thickness = 2
-            Box.Color = Color3.fromRGB(0, 0, 0)
-            Box.Filled = false
-            Box.Transparency = 1
-            Box.Visible = true
-            
-            local NameTag = Drawing.new("Text")
-            NameTag.Size = 16
-            NameTag.Color = Color3.fromRGB(255, 0, 0)
-            NameTag.Font = Drawing.Font.Garamond
-            NameTag.Outline = true
-            NameTag.Center = true
-            NameTag.Visible = true
-            
-            local DistanceTag = Drawing.new("Text")
-            DistanceTag.Size = 14
-            DistanceTag.Color = Color3.fromRGB(255, 255, 255)
-            DistanceTag.Font = Drawing.Font.Monospace
-            DistanceTag.Outline = true
-            DistanceTag.Center = true
-            DistanceTag.Visible = true
-            
-            ESPObjects[player] = {
-                Box = Box,
-                NameTag = NameTag,
-                DistanceTag = DistanceTag
-            }
-        end
-        
-        local function RemoveESP(player)
-            if ESPObjects[player] then
-                ESPObjects[player].Box:Remove()
-                ESPObjects[player].NameTag:Remove()
-                ESPObjects[player].DistanceTag:Remove()
-                ESPObjects[player] = nil
+        local espGuis = {}
+
+        local function createESP(player)
+            if player == LocalPlayer or not player.Character or not player.Character:FindFirstChild("Head") then
+                return
             end
+
+            if espGuis[player] then
+                espGuis[player]:Destroy()
+                espGuis[player] = nil
+            end
+
+            local billboard = Instance.new("BillboardGui")
+            billboard.Name = "ESP"
+            billboard.Adornee = player.Character.Head
+            billboard.AlwaysOnTop = true
+            billboard.Size = UDim2.new(0, 200, 0, 50)
+            billboard.StudsOffset = Vector3.new(0, 3, 0)
+            billboard.Parent = player.Character.Head
+
+            local nameLabel = Instance.new("TextLabel")
+            nameLabel.Name = "Name"
+            nameLabel.Text = player.Name
+            nameLabel.Font = nameFont
+            nameLabel.TextColor3 = nameColor
+            nameLabel.TextSize = textSize
+            nameLabel.BackgroundTransparency = 1
+            nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+            nameLabel.Position = UDim2.new(0, 0, 0, 0)
+            nameLabel.Parent = billboard
+
+            local distanceLabel = Instance.new("TextLabel")
+            distanceLabel.Name = "Distance"
+            distanceLabel.Text = "Distance: Calculating..."
+            distanceLabel.Font = distanceFont
+            distanceLabel.TextColor3 = distanceColor
+            distanceLabel.TextSize = textSize
+            distanceLabel.BackgroundTransparency = 1
+            distanceLabel.Size = UDim2.new(1, 0, 0.5, 0)
+            distanceLabel.Position = UDim2.new(0, 0, 0.5, 0)
+            distanceLabel.Parent = billboard
+
+            espGuis[player] = billboard
         end
-        
-        for _, player in pairs(Players:GetPlayers()) do
-            CreateESP(player)
-        end
-        
-        Players.PlayerAdded:Connect(CreateESP)
-        Players.PlayerRemoving:Connect(RemoveESP)
-        
-        RunService.RenderStepped:Connect(function()
-            if not esp then return end
-            for player, objects in pairs(ESPObjects) do
-                local character = player.Character
-                if character and character:FindFirstChild("HumanoidRootPart") then
-                    local hrp = character.HumanoidRootPart
-                    local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-                    
-                    if onScreen then
-                        objects.Box.Size = Vector2.new(1000 / pos.Z, 2000 / pos.Z)
-                        objects.Box.Position = Vector2.new(pos.X - objects.Box.Size.X / 2, pos.Y - objects.Box.Size.Y / 2)
-                        objects.Box.Visible = true
-                        
-                        objects.NameTag.Text = player.Name
-                        objects.NameTag.Position = Vector2.new(pos.X, pos.Y - 50)
-                        objects.NameTag.Visible = true
-                        
-                        local distance = (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (hrp.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude) or 0
-                        objects.DistanceTag.Text = string.format("%.1f studs", distance)
-                        objects.DistanceTag.Position = Vector2.new(pos.X, pos.Y - 30)
-                        objects.DistanceTag.Visible = true
-                    else
-                        objects.Box.Visible = false
-                        objects.NameTag.Visible = false
-                        objects.DistanceTag.Visible = false
-                    end
+
+        local function updateESP()
+            if not espEnabled then return end
+
+            local localChar = LocalPlayer.Character
+            if not localChar or not localChar:FindFirstChild("HumanoidRootPart") then return end
+
+            local localPos = localChar.HumanoidRootPart.Position
+
+            for player, gui in pairs(espGuis) do
+                if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local targetPos = player.Character.HumanoidRootPart.Position
+                    local distance = (localPos - targetPos).Magnitude
+                    gui.Distance.Text = string.format("Distance: %.1f studs", distance)
                 else
-                    objects.Box.Visible = false
-                    objects.NameTag.Visible = false
-                    objects.DistanceTag.Visible = false
+                    gui:Destroy()
+                    espGuis[player] = nil
                 end
             end
-        end)
-    else
-        for player, _ in pairs(ESPObjects) do
-            RemoveESP(player)
         end
-        ESPObjects = {}
+
+        Players.PlayerAdded:Connect(function(player)
+            player.CharacterAdded:Connect(function()
+                if espEnabled then
+                    createESP(player)
+                end
+            end)
+        end)
+
+        Players.PlayerRemoving:Connect(function(player)
+            if espGuis[player] then
+                espGuis[player]:Destroy()
+                espGuis[player] = nil
+            end
+        end)
+
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer and player.Character then
+                createESP(player)
+            end
+            player.CharacterAdded:Connect(function()
+                if espEnabled then
+                    createESP(player)
+                end
+            end)
+        end
+
+        RunService.RenderStepped:Connect(updateESP)
+    else
+        -- Clean up when ESP is disabled
+        for player, gui in pairs(espGuis or {}) do
+            if gui then
+                gui:Destroy()
+            end
+        end
+        espGuis = {}
     end
 end)
