@@ -26,22 +26,24 @@ folder1:AddSwitch("ESP", function(state)
             Box.Thickness = 2
             Box.Color = Color3.fromRGB(0, 0, 0)
             Box.Filled = false
-            Box.Transparency = 1
-            Box.Visible = false
+            Box.Transparency = 0
+            Box.Visible = true
             
             local NameTag = Drawing.new("Text")
             NameTag.Size = 16
             NameTag.Color = Color3.fromRGB(255, 0, 0)
+            NameTag.font = Enum.font.Garamond
             NameTag.Outline = true
             NameTag.Center = true
-            NameTag.Visible = false
+            NameTag.Visible = true
             
             local DistanceTag = Drawing.new("Text")
             DistanceTag.Size = 14
             DistanceTag.Color = Color3.fromRGB(255, 255, 255)
+            DistanceTag.font = Enum.font.Bangers
             DistanceTag.Outline = true
             DistanceTag.Center = true
-            DistanceTag.Visible = false
+            DistanceTag.Visible = true
             
             ESPObjects[player] = {
                 Box = Box,
