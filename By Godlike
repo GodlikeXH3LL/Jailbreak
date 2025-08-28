@@ -1,3 +1,4 @@
+
 local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/memejames/elerium-v2-ui-library/main/Library", true))()
 
 local window = library:AddWindow("JailBreak | MODDED", {
@@ -13,88 +14,84 @@ folder1:AddSwitch("ESP", function(state)
     esp = state
     if state then
         local Players = game:GetService("Players")
-        local RunService = game:GetService("RunService")
-        local Camera = workspace.CurrentCamera
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
 
-        local LocalPlayer = Players.LocalPlayer
-        local ESPObjects = {}
+local LocalPlayer = Players.LocalPlayer
+local ESPObjects = {}
 
-        local function CreateESP(player)
-            if player == LocalPlayer then return end
-            
-            local Box = Drawing.new("Square")
-            Box.Thickness = 2
-            Box.Color = Color3.fromRGB(0, 0, 0)
-            Box.Filled = false
-            Box.Transparency = 1
-            Box.Visible = true
-            
-            local NameTag = Drawing.new("Text")
-            NameTag.Size = 16
-            NameTag.Color = Color3.fromRGB(255, 0, 0)
-            NameTag.Outline = true
-            NameTag.Center = true
-            NameTag.Visible = true
-            
-            
-            
-            ESPObjects[player] = {
-                Box = Box,
-                NameTag = NameTag,
-                
-            }
-        end
+local function CreateESP(player)
+    if player == LocalPlayer then return end
+    
+    local Box = Drawing.new("Square")
+    Box.Thickness = 2
+    Box.Color = Color3.fromRGB(255, 0, 0) -- Initial color, will be updated in animation
+    Box.Filled = false
+    Box.Transparency = 1
+    Box.Visible = true
+    
+    local NameTag = Drawing.new("Text")
+    NameTag.Size = 16
+    NameTag.Color = Color3.fromRGB(255, 0, 0)
+    NameTag.Font = Enum.Font.Garamond
+    NameTag.Outline = true
+    NameTag.Center = true
+    NameTag.Visible = true
+    
+    ESPObjects[player] = {
+        Box = Box,
+        NameTag = NameTag,
+    }
+end
 
-        local function RemoveESP(player)
-            if ESPObjects[player] then
-                ESPObjects[player].Box:Remove()
-                ESPObjects[player].NameTag:Remove()
-                ESPObjects[player] = nil
-            end
-        end
-
-        local function UpdateESP()
-            for player, objects in pairs(ESPObjects) do
-                local character = player.Character
-                if character and character:FindFirstChild("HumanoidRootPart") then
-                    local rootPart = character.HumanoidRootPart
-                    local position, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
-                    
-                    if onScreen then
-                        objects.Box.Visible = true
-                        objects.NameTag.Visible = true
-                        
-                        objects.Box.Size = Vector2.new(2000 / position.Z, 2000 / position.Z)
-                        objects.Box.Position = Vector2.new(position.X - objects.Box.Size.X / 2, position.Y - objects.Box.Size.Y / 2)
-                        
-                        objects.NameTag.Text = player.Name
-                        objects.NameTag.Position = Vector2.new(position.X, position.Y - objects.Box.Size.Y / 2 - 20)
-                        
-                        local distance = (LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart and (rootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude) or 0
-                        objects.DistanceTag.Text = string.format("%.1f studs", distance)
-                        objects.DistanceTag.Position = Vector2.new(position.X, position.Y + objects.Box.Size.Y / 2 + 10)
-                    else
-                        objects.Box.Visible = false
-                        objects.NameTag.Visible = false
-                    end
-                else
-                    objects.Box.Visible = false
-                    objects.NameTag.Visible = false
-                end
-            end
-        end
-
-        for _, player in pairs(Players:GetPlayers()) do
-            CreateESP(player)
-        end
-
-        Players.PlayerAdded:Connect(CreateESP)
-        Players.PlayerRemoving:Connect(RemoveESP)
-        RunService.RenderStepped:Connect(UpdateESP)
-    else
-        for player, objects in pairs(ESPObjects or {}) do
-            RemoveESP(player)
-        end
-        ESPObjects = {}
+local function RemoveESP(player)
+    if ESPObjects[player] then
+        ESPObjects[player].Box:Remove()
+        ESPObjects[player].NameTag:Remove()
+        ESPObjects[player] = nil
     end
-end)
+end
+
+local function UpdateESP()
+    for player, objects in pairs(ESPObjects) do
+        local character = player.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local rootPart = character.HumanoidRootPart
+            local position, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+            
+            -- Calculate rainbow color based on time
+            local hue = (tick() % 5) / 5 -- Cycle every 5 seconds
+            local rainbowColor = Color3.fromHSV(hue, 1, 1) -- Full saturation and value for neon effect
+            
+            if onScreen then
+                objects.Box.Visible = true
+                objects.NameTag.Visible = true
+                
+                -- Update box to outline the character
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                local size = character:GetExtentsSize() * 100 -- Scale for viewport
+                objects.Box.Size = Vector2.new(size.X / position.Z, size.Y / position.Z)
+                objects.Box.Position = Vector2.new(position.X - objects.Box.Size.X / 2, position.Y - objects.Box.Size.Y / 2)
+                objects.Box.Color = rainbowColor -- Apply animated rainbow color
+                
+                objects.NameTag.Text = player.Name
+                objects.NameTag.Position = Vector2.new(position.X, position.Y - objects.Box.Size.Y / 2 - 20)
+                objects.NameTag.Color = rainbowColor -- Optional: Apply rainbow to name tag
+            else
+                objects.Box.Visible = false
+                objects.NameTag.Visible = false
+            end
+        else
+            objects.Box.Visible = false
+            objects.NameTag.Visible = false
+        end
+    end
+end
+
+for _, player in pairs(Players:GetPlayers()) do
+    CreateESP(player)
+end
+
+Players.PlayerAdded:Connect(CreateESP)
+Players.PlayerRemoving:Connect(RemoveESP)
+RunService.RenderStepped:Connect(UpdateESP)
