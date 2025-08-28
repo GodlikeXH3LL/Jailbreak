@@ -32,7 +32,7 @@ folder1:AddSwitch("ESP", function(state)
             local NameTag = Drawing.new("Text")
             NameTag.Size = 16
             NameTag.Color = Color3.fromRGB(255, 0, 0)
-            NameTag.Font = Enum.Font.Garamond
+            NameTag.Font = Drawing.Font.Garamond
             NameTag.Outline = true
             NameTag.Center = true
             NameTag.Visible = true
@@ -40,7 +40,7 @@ folder1:AddSwitch("ESP", function(state)
             local DistanceTag = Drawing.new("Text")
             DistanceTag.Size = 14
             DistanceTag.Color = Color3.fromRGB(255, 255, 255)
-            DistanceTag.Font = Enum.Font.Bangers
+            DistanceTag.Font = Drawing.Font.Monospace
             DistanceTag.Outline = true
             DistanceTag.Center = true
             DistanceTag.Visible = true
